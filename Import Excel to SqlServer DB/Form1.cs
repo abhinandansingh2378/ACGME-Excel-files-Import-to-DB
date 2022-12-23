@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Data.SqlClient;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -55,7 +56,7 @@ namespace Import_Excel_to_SqlServer_DB
 
                         fileName = System.IO.Path.GetFileNameWithoutExtension(openFileDialog1.FileNames[i]).Replace(".pdf","");
                         string strConn = string.Empty;
-                        string sheetName = fileName;
+                        fileName = "[" +fileName+"]";
 
                         FileInfo file = new FileInfo(fileLocation);
 
@@ -66,10 +67,10 @@ namespace Import_Excel_to_SqlServer_DB
 
                         ExcelRead(fileLocation);
                         //Fetching  Stunum that we took input from Excel  
-                        fileLocations[i] = fileLocation;
-                        fileNames[i] = fileName;
-                        files[i] = file;
+                        BulkInsertDataTable(fileName, dt);
+                        textBox1.Text += fileName + " table is inserted to Acgme Data base " + "\n";
                         //importdatafromexcel(fileLocation);
+                        dt.Reset();
                     }
 
 
@@ -151,6 +152,62 @@ namespace Import_Excel_to_SqlServer_DB
             dt.Columns.Add("Accreditation Status");
             dt.Columns.Add("Effective Date");
             dt.Columns.Add("Clinical Rotation Exists");
+        }
+
+        public static String CreateTableImport(string tablename)
+        {
+            return @"IF OBJECT_ID(N'dbo." + tablename + "',N'U') IS NOT NULL" + " DROP TABLE [dbo]." + tablename
+            +" CREATE TABLE " + "[dbo]." +tablename
+                   + "([ACGME No#] nvarchar(255),"
+                   + "[Program Name] nvarchar(255),"
+                   + "[Program Name2] nvarchar(255),"
+                   + "[Address] nvarchar(255),"
+                   + "[Address2] nvarchar(255),"
+                   + "[City] nvarchar(255),"
+                   + "[Contact] nvarchar(255),"
+                   + "[Phone No#] nvarchar(255),"
+                   + "[Global Dimension 1 Code] nvarchar(255),"
+                   + "[Country/Region Code] nvarchar(255),"
+                   + "[Zip Code] nvarchar(255),"
+                   + "[State] nvarchar(255),"
+                   + "[Email] nvarchar(255),"
+                   + "[Primary Contact No#] nvarchar(255),"
+                   + "[Vendor Sub Type] nvarchar(255),"
+                   + "[ACGME #] nvarchar(255),"
+                   + "[Residency] nvarchar(255),"
+                   + "[Non-Affiliated Hospital] nvarchar(255),"
+                   + "[State Code] nvarchar(255),"
+                   + "[Speciality] nvarchar(255),"
+                   + "[Extension] nvarchar(255),"
+                   + "[Primary Contact] nvarchar(255),"
+                   + "[Primary Contact Name] nvarchar(255),"
+                   + "[Program Director] nvarchar(255),"
+                   + "[Accreditation Status] nvarchar(255),"
+                   + "[Effective Date] nvarchar(255),"
+                   + "[Clinical Rotation Exists] nvarchar(255))";
+
+        }
+
+        public void BulkInsertDataTable(string tableName, DataTable dataTable)
+        {
+            try
+            {
+                string sqlConnectionString = "server=mea-dm;User ID = tricon; password = mea@1234; database = Acgme; connection reset = false";
+                SqlConnection sqlconn = new SqlConnection(sqlConnectionString);
+                sqlconn.Open();
+                // create table if not exists 
+                string createTableQuery = CreateTableImport(tableName);
+                SqlCommand createCommand = new SqlCommand(createTableQuery, sqlconn);
+                createCommand.ExecuteNonQuery();
+                SqlBulkCopy bulkCopy = new SqlBulkCopy(sqlconn, SqlBulkCopyOptions.TableLock | SqlBulkCopyOptions.FireTriggers |SqlBulkCopyOptions.UseInternalTransaction, null);
+                bulkCopy.DestinationTableName = tableName;
+                bulkCopy.WriteToServer(dataTable);
+                sqlconn.Close();
+            }
+            catch (Exception ex)
+            {
+                Console.Write(ex.Message.ToString());
+            }
         }
 
     }
