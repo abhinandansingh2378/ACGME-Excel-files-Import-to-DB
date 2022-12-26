@@ -44,6 +44,8 @@ namespace Import_Excel_to_SqlServer_DB
             {
                 if (openFileDialog1.ShowDialog() == DialogResult.OK) //executing when file open
                 {
+                    int fileNo = 1;
+                    string newLine = Environment.NewLine;
                     fileLocations = new String[openFileDialog1.FileNames.Length];
                     fileNames = new String[openFileDialog1.FileNames.Length];
                     files = new FileInfo[openFileDialog1.FileNames.Length];
@@ -66,19 +68,19 @@ namespace Import_Excel_to_SqlServer_DB
                         }
 
                         ExcelRead(fileLocation);
-                        //Fetching  Stunum that we took input from Excel  
                         BulkInsertDataTable(fileName, dt);
-                        textBox1.Text += fileName + " table is inserted to Acgme Data base " + "\n";
-                        //importdatafromexcel(fileLocation);
+                        textBox1.Text += fileNo.ToString()+". "+ fileName + " table is inserted to Acgme Data base"+ newLine;
+                        fileNo += 1;
+                        importdatafromexcel(fileLocation);
                         dt.Reset();
                     }
 
 
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                MessageBox.Show("Error, Issue while selecting PDF file ! ");
+                MessageBox.Show(ex.Message +"Error, Issue while selecting PDF file ! ");
             }
         }
 
