@@ -71,7 +71,6 @@ namespace Import_Excel_to_SqlServer_DB
                         BulkInsertDataTable(fileName, dt);
                         textBox1.Text += fileNo.ToString()+". "+ fileName + " table is inserted to Acgme Data base"+ newLine;
                         fileNo += 1;
-                        importdatafromexcel(fileLocation);
                         dt.Reset();
                     }
 
