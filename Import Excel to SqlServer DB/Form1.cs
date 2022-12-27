@@ -25,7 +25,7 @@ namespace Import_Excel_to_SqlServer_DB
         DataTable dt = new DataTable();
         DataColumn dtColumn;
         DataRow myDataRow;
-        string[] acgmeColumns = { "No.", "Program Name", "Program Name2",    "Address",  "Address2", "City", "Contact",  "Phone No.",    "Global Dimension 1 Code",  "Country/Region Code",  "Zip Code", "State",    "Email",    "Primary Contact No.",  "Vendor Sub Type",  "ACGME #",  "Residency",    "Non-Affiliated Hospital",  "State Code",   "Speciality",   "Extension",    "Primary Contact",  "Primary Contact Name", "Program Director", "Accreditation Status", "Effective Date",   "Clinical Rotation Exists"};
+        string[] acgmeColumns = { "ACGME No.", "Program Name", "Program Name2",    "Address",  "Address2", "City", "Contact",  "Phone No.",    "Global Dimension 1 Code",  "Country/Region Code",  "Zip Code", "State",    "Email",    "Primary Contact No.",  "Vendor Sub Type",  "ACGME #",  "Residency",    "Non-Affiliated Hospital",  "State Code",   "Speciality",   "Extension",    "Primary Contact",  "Primary Contact Name", "Program Director", "Accreditation Status", "Effective Date",   "Clinical Rotation Exists"};
         public Form1()
         {
             InitializeComponent();
@@ -100,8 +100,8 @@ namespace Import_Excel_to_SqlServer_DB
                     myDataRow = dt.NewRow();
                     for (int j = 1; j <= columnCount; j++)
                     {
-                        
-                        if (j == 1 )
+                        //int temp = xlRange.Cells[i, j].Value2;
+                        if (j == 16 )
                         {
                             myDataRow[acgmeColumns[j - 1]] = Convert.ToUInt64(xlRange.Cells[i, j].Value2);
                         }
@@ -126,7 +126,7 @@ namespace Import_Excel_to_SqlServer_DB
 
         public void AcgmeColumns()
         {
-            dt.Columns.Add("No.");
+            dt.Columns.Add("ACGME No.");
             dt.Columns.Add("Program Name");
             dt.Columns.Add("Program Name2");
             dt.Columns.Add("Address");
@@ -159,7 +159,7 @@ namespace Import_Excel_to_SqlServer_DB
         {
             return @"IF OBJECT_ID(N'dbo." + tablename + "',N'U') IS NOT NULL" + " DROP TABLE [dbo]." + tablename
             +" CREATE TABLE " + "[dbo]." +tablename
-                   + "([ACGME No#] nvarchar(255),"
+                   + "([ACGME No] nvarchar(255),"
                    + "[Program Name] nvarchar(255),"
                    + "[Program Name2] nvarchar(255),"
                    + "[Address] nvarchar(255),"
@@ -193,7 +193,7 @@ namespace Import_Excel_to_SqlServer_DB
         {
             try
             {
-                string sqlConnectionString = "server=mea-dm;User ID = tricon; password = mea@1234; database = Acgme; connection reset = false";
+                string sqlConnectionString = "server=mea-dm;User ID = tricon; password = mea@1234; database = ACGME; connection reset = false";
                 SqlConnection sqlconn = new SqlConnection(sqlConnectionString);
                 sqlconn.Open();
                 // create table if not exists 
