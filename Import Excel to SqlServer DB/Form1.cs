@@ -13,7 +13,7 @@ using System.Windows.Forms;
 namespace Import_Excel_to_SqlServer_DB
 {
 
-    
+
     public partial class Form1 : Form
     {
 
@@ -23,9 +23,12 @@ namespace Import_Excel_to_SqlServer_DB
         string fileLocation = "";
         string fileName = "";
         DataTable dt = new DataTable();
+        DataTable MasterDT = new DataTable();
+        DataTable RemDupACGMENODT = new DataTable();
+        DataTable RemDupHospitalNameDT = new DataTable();
         DataColumn dtColumn;
         DataRow myDataRow;
-        string[] acgmeColumns = { "ACGME No.", "Program Name", "Program Name2",    "Address",  "Address2", "City", "Contact",  "Phone No.",    "Global Dimension 1 Code",  "Country/Region Code",  "Zip Code", "State",    "Email",    "Primary Contact No.",  "Vendor Sub Type",  "ACGME #",  "Residency",    "Non-Affiliated Hospital",  "State Code",   "Speciality",   "Extension",    "Primary Contact",  "Primary Contact Name", "Program Director", "Accreditation Status", "Effective Date",   "Clinical Rotation Exists"};
+        string[] acgmeColumns = { "ACGME No.", "Program Name", "Program Name2", "Address", "Address2", "City", "Contact", "Phone No.", "Global Dimension 1 Code", "Country/Region Code", "Zip Code", "State", "Email", "Primary Contact No.", "Vendor Sub Type", "ACGME #", "Residency", "Non-Affiliated Hospital", "State Code", "Speciality", "Extension", "Primary Contact", "Primary Contact Name", "Program Director", "Accreditation Status", "Effective Date", "Clinical Rotation Exists" };
         public Form1()
         {
             InitializeComponent();
@@ -56,9 +59,9 @@ namespace Import_Excel_to_SqlServer_DB
 
                         fileLocation = openFileDialog1.FileNames[i];
 
-                        fileName = System.IO.Path.GetFileNameWithoutExtension(openFileDialog1.FileNames[i]).Replace(".pdf","");
+                        fileName = System.IO.Path.GetFileNameWithoutExtension(openFileDialog1.FileNames[i]).Replace(".pdf", "").Replace("-", "").Replace("(", "").Replace(")", "").Replace(" ", "");
                         string strConn = string.Empty;
-                        fileName = "[" +fileName+"]";
+                        fileName = "[" + fileName + "]";
 
                         FileInfo file = new FileInfo(fileLocation);
 
@@ -69,8 +72,9 @@ namespace Import_Excel_to_SqlServer_DB
 
                         ExcelRead(fileLocation);
                         BulkInsertDataTable(fileName, dt);
-                        textBox1.Text += fileNo.ToString()+". "+ fileName + " table is inserted to Acgme Data base"+ newLine;
+                        textBox1.Text += fileNo.ToString() + ". " + fileName + " table is inserted to Acgme Data base" + newLine;
                         fileNo += 1;
+
                         dt.Reset();
                     }
 
@@ -79,7 +83,7 @@ namespace Import_Excel_to_SqlServer_DB
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message +"Error, Issue while selecting PDF file ! ");
+                MessageBox.Show(ex.Message + "Error, Issue while selecting PDF file ! ");
             }
         }
 
@@ -101,7 +105,7 @@ namespace Import_Excel_to_SqlServer_DB
                     for (int j = 1; j <= columnCount; j++)
                     {
                         //int temp = xlRange.Cells[i, j].Value2;
-                        if (j == 16 )
+                        if (j == 16)
                         {
                             myDataRow[acgmeColumns[j - 1]] = Convert.ToUInt64(xlRange.Cells[i, j].Value2);
                         }
@@ -109,7 +113,7 @@ namespace Import_Excel_to_SqlServer_DB
                         {
                             myDataRow[acgmeColumns[j - 1]] = Convert.ToString(xlRange.Cells[i, j].Value2);
                         }
-                        
+
                     }
                     dt.Rows.Add(myDataRow);
                 }
@@ -158,7 +162,7 @@ namespace Import_Excel_to_SqlServer_DB
         public static String CreateTableImport(string tablename)
         {
             return @"IF OBJECT_ID(N'dbo." + tablename + "',N'U') IS NOT NULL" + " DROP TABLE [dbo]." + tablename
-            +" CREATE TABLE " + "[dbo]." +tablename
+            + " CREATE TABLE " + "[dbo]." + tablename
                    + "([ACGME No] nvarchar(255),"
                    + "[Program Name] nvarchar(255),"
                    + "[Program Name2] nvarchar(255),"
@@ -200,7 +204,7 @@ namespace Import_Excel_to_SqlServer_DB
                 string createTableQuery = CreateTableImport(tableName);
                 SqlCommand createCommand = new SqlCommand(createTableQuery, sqlconn);
                 createCommand.ExecuteNonQuery();
-                SqlBulkCopy bulkCopy = new SqlBulkCopy(sqlconn, SqlBulkCopyOptions.TableLock | SqlBulkCopyOptions.FireTriggers |SqlBulkCopyOptions.UseInternalTransaction, null);
+                SqlBulkCopy bulkCopy = new SqlBulkCopy(sqlconn, SqlBulkCopyOptions.TableLock | SqlBulkCopyOptions.FireTriggers | SqlBulkCopyOptions.UseInternalTransaction, null);
                 bulkCopy.DestinationTableName = tableName;
                 bulkCopy.WriteToServer(dataTable);
                 sqlconn.Close();
@@ -211,5 +215,107 @@ namespace Import_Excel_to_SqlServer_DB
             }
         }
 
+        public void InsertDataTable(DataTable dataTable)
+        {
+            try
+            {
+                string sqlConnectionString = "server=mea-dm;User ID = tricon; password = mea@1234; database = ACGME; connection reset = false";
+                SqlConnection sqlconn = new SqlConnection(sqlConnectionString);
+                sqlconn.Open();
+                using (var command = new SqlCommand("ACGMEAllTable") { CommandType = CommandType.StoredProcedure })
+                {
+                    //var dt = new DataTable(); //create your own data table
+                    command.Parameters.Add(new SqlParameter("@myTableType", MasterDT));
+                    command.ExecuteNonQuery();
+                    // SqlHelper.Exec(command);
+
+                }
+                //foreach (DataRow row in dt.Rows)
+                //{
+                //    using (var cmd = new SqlCommand($"INSERT INTO [dbo].[ACGMEDataImport] VALUES({row.Field<string>("ACGME No.")}, {row.Field<string>("Program Name")}, {row.Field<string>("Program Name2")}, { row.Field<string>("Address")}, { row.Field<string>("Address2")}, { row.Field<string>("City")}, { row.Field<string>("Contact")}, { row.Field<string>("Phone No.")}, { row.Field<string>("Global Dimension 1 Code")}, { row.Field<string>("Country/Region Code")}, { row.Field<string>("Zip Code")}, { row.Field<string>("State")}, { row.Field<string>("Email")}, { row.Field<string>("Primary Contact No.")}, { row.Field<string>("Vendor Sub Type")}, { row.Field<string>("ACGME #")}, { row.Field<string>("Residency")}, { row.Field<string>("Non-Affiliated Hospital")}, { row.Field<string>("State Code")}, { row.Field<string>("Speciality")}, { row.Field<string>("Extension")}, { row.Field<string>("Primary Contact")},{ row.Field<string>("Primary Contact Name")}, { row.Field<string>("Program Director")}, { row.Field<string>("Accreditation Status")}, { row.Field<string>("Effective Date")}, { row.Field<string>("Clinical Rotation Exists")}) ", sqlconn))
+                //    {
+                //        cmd.ExecuteNonQuery();
+                //    }
+                //}
+                // create table if not exists 
+                // string createTableQuery = InsertTableImport();
+                // SqlCommand createCommand = new SqlCommand(createTableQuery, sqlconn);
+                // createCommand.ExecuteNonQuery();
+                // SqlBulkCopy bulkCopy = new SqlBulkCopy(sqlconn, SqlBulkCopyOptions.TableLock | SqlBulkCopyOptions.FireTriggers | SqlBulkCopyOptions.UseInternalTransaction, null);
+                //// bulkCopy.DestinationTableName = tableName;
+                // bulkCopy.WriteToServer(dataTable);
+                sqlconn.Close();
+            }
+            catch (Exception ex)
+            {
+                Console.Write(ex.Message.ToString());
+            }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog openFileDialog1 = new OpenFileDialog();
+            //open file format define PDF files
+            openFileDialog1.Filter = "Excel Files|*.xls;*.xlsx;*.xlsm";
+            openFileDialog1.Multiselect = true; //allow multiline selection at the file selection level
+            openFileDialog1.InitialDirectory = @"D:"; //define the initial directory
+
+            try
+            {
+                if (openFileDialog1.ShowDialog() == DialogResult.OK) //executing when file open
+                {
+                    int fileNo = 1;
+                    string newLine = Environment.NewLine;
+                    fileLocations = new String[openFileDialog1.FileNames.Length];
+                    fileNames = new String[openFileDialog1.FileNames.Length];
+                    files = new FileInfo[openFileDialog1.FileNames.Length];
+
+
+                    for (int i = 0; i < openFileDialog1.FileNames.Length; i++)
+                    {
+
+                        fileLocation = openFileDialog1.FileNames[i];
+
+                        fileName = System.IO.Path.GetFileNameWithoutExtension(openFileDialog1.FileNames[i]).Replace(".pdf", "").Replace("-", "").Replace("(", "").Replace(")", "").Replace(" ", "");
+                        string strConn = string.Empty;
+                        fileName = "[" + fileName + "]";
+
+                        FileInfo file = new FileInfo(fileLocation);
+
+                        if (!file.Exists)
+                        {
+                            throw new Exception("Error, file doesn't exists!");
+                        }
+
+                        ExcelRead(fileLocation);
+                        MasterDT.Merge(dt);
+                        MasterDT.AcceptChanges();
+                        RemDupACGMENODT = MasterDT.AsEnumerable()
+                                   .GroupBy(x => x.Field<String>("ACGME #"))
+                                   .Select(y => y.First())
+                                   .CopyToDataTable();
+                        RemDupHospitalNameDT = MasterDT.AsEnumerable()
+                                   .GroupBy(x => x.Field<String>("Program Name"))
+                                   .Select(y => y.First())
+                                   .CopyToDataTable();
+                        // BulkInsertDataTable(fileName, dt);
+
+                        //fileNo += 1;
+
+                        dt.Reset();
+
+                    }
+                    BulkInsertDataTable("MasterAcgme", MasterDT);
+                    BulkInsertDataTable("Rem_Dup_ACGMENO", RemDupACGMENODT);
+                    BulkInsertDataTable("Rem_Dup_HospitalName", RemDupHospitalNameDT);
+                    textBox1.Text += "All the files are merged.";
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message + "Error, Issue while selecting PDF file ! ");
+            }
+        }
     }
+    
 }
