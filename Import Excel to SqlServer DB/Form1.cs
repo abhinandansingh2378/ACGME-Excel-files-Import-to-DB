@@ -32,6 +32,7 @@ namespace Import_Excel_to_SqlServer_DB
         public Form1()
         {
             InitializeComponent();
+            button3.Visible = false;
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -124,8 +125,6 @@ namespace Import_Excel_to_SqlServer_DB
             {
                 MessageBox.Show("Getting Error " + ex.ToString());
             }
-
-
         }
 
         public void AcgmeColumns()
@@ -254,16 +253,9 @@ namespace Import_Excel_to_SqlServer_DB
                         MasterDT.AcceptChanges();
                         dt.Reset();
                     }
-                    //RemDupACGMENODT = MasterDT.AsEnumerable()
-                    //              .GroupBy(x => x.Field<String>("ACGME #"))
-                    //              .Select(y => y.First())
-                    //              .CopyToDataTable();
-                    //RemDupHospitalNameDT = MasterDT.AsEnumerable()
-                    //           .GroupBy(x => x.Field<String>("Program Name"))
-                    //           .Select(y => y.First())
-                    //           .CopyToDataTable();
-                   BulkInsertDataTable("MasterAcgme", MasterDT);                  
-                    textBox1.Text = "All the files are merged.";
+                    BulkInsertDataTable("MasterAcgme", MasterDT);                  
+                    textBox1.Text = "All select Excel files are successfully merged.";
+                    button3.Visible = true;
                 }
             }
             catch (Exception ex)
@@ -279,8 +271,6 @@ namespace Import_Excel_to_SqlServer_DB
                 string sqlConnectionString = "server=mea-dm;User ID = tricon; password = mea@1234; database = ACGME; connection reset = false";
                 SqlConnection sqlconn = new SqlConnection(sqlConnectionString);
                 sqlconn.Open();
-                // create table if not exists 
-                //string createTableQuery = CreateTableImport(tableName);
                 SqlCommand sql_cmnd = new SqlCommand("ACGME_Rem_dup_records", sqlconn);
                 sql_cmnd.CommandType = CommandType.StoredProcedure;
                 sql_cmnd.ExecuteNonQuery();
