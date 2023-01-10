@@ -215,43 +215,6 @@ namespace Import_Excel_to_SqlServer_DB
             }
         }
 
-        public void InsertDataTable(DataTable dataTable)
-        {
-            try
-            {
-                string sqlConnectionString = "server=mea-dm;User ID = tricon; password = mea@1234; database = ACGME; connection reset = false";
-                SqlConnection sqlconn = new SqlConnection(sqlConnectionString);
-                sqlconn.Open();
-                using (var command = new SqlCommand("ACGMEAllTable") { CommandType = CommandType.StoredProcedure })
-                {
-                    //var dt = new DataTable(); //create your own data table
-                    command.Parameters.Add(new SqlParameter("@myTableType", MasterDT));
-                    command.ExecuteNonQuery();
-                    // SqlHelper.Exec(command);
-
-                }
-                //foreach (DataRow row in dt.Rows)
-                //{
-                //    using (var cmd = new SqlCommand($"INSERT INTO [dbo].[ACGMEDataImport] VALUES({row.Field<string>("ACGME No.")}, {row.Field<string>("Program Name")}, {row.Field<string>("Program Name2")}, { row.Field<string>("Address")}, { row.Field<string>("Address2")}, { row.Field<string>("City")}, { row.Field<string>("Contact")}, { row.Field<string>("Phone No.")}, { row.Field<string>("Global Dimension 1 Code")}, { row.Field<string>("Country/Region Code")}, { row.Field<string>("Zip Code")}, { row.Field<string>("State")}, { row.Field<string>("Email")}, { row.Field<string>("Primary Contact No.")}, { row.Field<string>("Vendor Sub Type")}, { row.Field<string>("ACGME #")}, { row.Field<string>("Residency")}, { row.Field<string>("Non-Affiliated Hospital")}, { row.Field<string>("State Code")}, { row.Field<string>("Speciality")}, { row.Field<string>("Extension")}, { row.Field<string>("Primary Contact")},{ row.Field<string>("Primary Contact Name")}, { row.Field<string>("Program Director")}, { row.Field<string>("Accreditation Status")}, { row.Field<string>("Effective Date")}, { row.Field<string>("Clinical Rotation Exists")}) ", sqlconn))
-                //    {
-                //        cmd.ExecuteNonQuery();
-                //    }
-                //}
-                // create table if not exists 
-                // string createTableQuery = InsertTableImport();
-                // SqlCommand createCommand = new SqlCommand(createTableQuery, sqlconn);
-                // createCommand.ExecuteNonQuery();
-                // SqlBulkCopy bulkCopy = new SqlBulkCopy(sqlconn, SqlBulkCopyOptions.TableLock | SqlBulkCopyOptions.FireTriggers | SqlBulkCopyOptions.UseInternalTransaction, null);
-                //// bulkCopy.DestinationTableName = tableName;
-                // bulkCopy.WriteToServer(dataTable);
-                sqlconn.Close();
-            }
-            catch (Exception ex)
-            {
-                Console.Write(ex.Message.ToString());
-            }
-        }
-
         private void button2_Click(object sender, EventArgs e)
         {
             OpenFileDialog openFileDialog1 = new OpenFileDialog();
@@ -264,7 +227,6 @@ namespace Import_Excel_to_SqlServer_DB
             {
                 if (openFileDialog1.ShowDialog() == DialogResult.OK) //executing when file open
                 {
-                    int fileNo = 1;
                     string newLine = Environment.NewLine;
                     fileLocations = new String[openFileDialog1.FileNames.Length];
                     fileNames = new String[openFileDialog1.FileNames.Length];
@@ -290,30 +252,44 @@ namespace Import_Excel_to_SqlServer_DB
                         ExcelRead(fileLocation);
                         MasterDT.Merge(dt);
                         MasterDT.AcceptChanges();
-                        RemDupACGMENODT = MasterDT.AsEnumerable()
-                                   .GroupBy(x => x.Field<String>("ACGME #"))
-                                   .Select(y => y.First())
-                                   .CopyToDataTable();
-                        RemDupHospitalNameDT = MasterDT.AsEnumerable()
-                                   .GroupBy(x => x.Field<String>("Program Name"))
-                                   .Select(y => y.First())
-                                   .CopyToDataTable();
-                        // BulkInsertDataTable(fileName, dt);
-
-                        //fileNo += 1;
-
                         dt.Reset();
-
                     }
-                    BulkInsertDataTable("MasterAcgme", MasterDT);
-                    BulkInsertDataTable("Rem_Dup_ACGMENO", RemDupACGMENODT);
-                    BulkInsertDataTable("Rem_Dup_HospitalName", RemDupHospitalNameDT);
-                    textBox1.Text += "All the files are merged.";
+                    //RemDupACGMENODT = MasterDT.AsEnumerable()
+                    //              .GroupBy(x => x.Field<String>("ACGME #"))
+                    //              .Select(y => y.First())
+                    //              .CopyToDataTable();
+                    //RemDupHospitalNameDT = MasterDT.AsEnumerable()
+                    //           .GroupBy(x => x.Field<String>("Program Name"))
+                    //           .Select(y => y.First())
+                    //           .CopyToDataTable();
+                   BulkInsertDataTable("MasterAcgme", MasterDT);                  
+                    textBox1.Text = "All the files are merged.";
                 }
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message + "Error, Issue while selecting PDF file ! ");
+            }
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string sqlConnectionString = "server=mea-dm;User ID = tricon; password = mea@1234; database = ACGME; connection reset = false";
+                SqlConnection sqlconn = new SqlConnection(sqlConnectionString);
+                sqlconn.Open();
+                // create table if not exists 
+                //string createTableQuery = CreateTableImport(tableName);
+                SqlCommand sql_cmnd = new SqlCommand("ACGME_Rem_dup_records", sqlconn);
+                sql_cmnd.CommandType = CommandType.StoredProcedure;
+                sql_cmnd.ExecuteNonQuery();
+                sqlconn.Close();
+                textBox1.Text = "Duplicates are removed!!.";
+            }
+            catch (Exception ex)
+            {
+                Console.Write(ex.Message.ToString());
             }
         }
     }
